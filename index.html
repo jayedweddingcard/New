@@ -228,7 +228,8 @@ footer{text-align:center;padding:22px;font-size:13px;color:#66583e}
   let speakId = 0;
   let speaking = false;
   let petalTimer = null;
-  // ===== অ্যাডমিন: পাসওয়ার্ড দিয়ে প্রবেশ। শেয়ার করা (#invite=) লিংকে অ্যাডমিন সম্পূর্ণ বন্ধ থাকে =====
+
+  // ===== অ্যাডমিন মোড নিয়ন্ত্রণ =====
   const PW_KEY = "royalAdminPw_v1";
   const SESSION_KEY = "royalAdminOk_v1";
   const hasInviteInUrl = () => /(?:^#|&)invite=/.test(location.hash || "");
@@ -240,7 +241,7 @@ footer{text-align:center;padding:22px;font-size:13px;color:#66583e}
     document.body.classList.toggle("guest-mode", hasInviteInUrl());
   }
 
-  /* ---------- Invite link data (#invite=<base64 JSON>) : একবারই ডিকোড হয় ---------- */
+  /* ---------- Invite link data (#invite=<base64 JSON>) ---------- */
   function readHash() {
     const match = (location.hash || "").match(/(?:^#|&)invite=([^&]+)/);
     if (!match) return null;
@@ -288,11 +289,11 @@ footer{text-align:center;padding:22px;font-size:13px;color:#66583e}
   }
 
   function saveData() {
-    if (hasInviteLink || !isOwner()) return; // শেয়ার করা লিংকের তথ্য কখনও ওভাররাইট হবে না
+    if (hasInviteLink || !isOwner()) return;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch (_) {}
   }
 
-  /* ---------- Render ---------- */
+  /* ---------- রেন্ডারিং ---------- */
   function setText(id, value) { $(id).textContent = value || ""; }
   function render() {
     setText("groomName", data.groom);
@@ -316,11 +317,18 @@ footer{text-align:center;padding:22px;font-size:13px;color:#66583e}
     $("voiceTypeInput").value = "male";
     const m = String(data.event || "").match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
     $("eventInput").value = m ? m[0] : "";
+    startCountdown();
   }
 
   /* ---------- অডিও URL যাচাই ---------- */
   function resolveAudioUrl(url) {
     url = (url || "").trim();
     if (!url) return {empty:true};
-    if (/^https:\/\//i.test(url)) return {url};
-    if (/^[a-z][a-z0-9+.-]*:/i.test(url)
+    if (/^https:\/\//i.test(url)) return {url: url};
+    if (/^[a-z][a-z0-9+.-]*:/i.test(url)) {
+      return {error: "শুধুমাত্র নিরাপদ HTTPS লিঙ্ক সমর্থিত।"};
+    }
+    return {url: url};
+  }
+
+  /
